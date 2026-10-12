@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Speech-to-Text (Whisper Small)</title>
+<style>
+  body {
+    font-family: -apple-system, Arial, sans-serif;
+    max-width: 640px;
+    margin: 60px auto;
+    padding: 0 20px;
+    color: #222;
+  }
+  h1 { font-size: 1.5rem; }
+  .card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+  input[type="file"] { margin: 12px 0; }
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  button:disabled { background: #93b4f0; cursor: not-allowed; }
+  #result {
+    margin-top: 16px;
+    white-space: pre-wrap;
+    background: #f7f7f8;
+    padding: 14px;
+    border-radius: 8px;
+    min-height: 40px;
+  }
+  #error { color: #c0392b; margin-top: 10px; }
+  footer { margin-top: 30px; font-size: 0.85rem; color: #666; }
+</style>
+</head>
+<body>
+  <h1>🎙️ Speech-to-Text — Whisper Small</h1>
+  <p>Upload an audio file (wav, mp3, m4a, flac, ogg, webm) and get a transcription.</p>
+
+  <div class="card">
+    <form id="upload-form">
+      <input type="file" id="audio-input" name="audio" accept="audio/*" required />
+      <br />
+      <button type="submit" id="submit-btn">Transcribe</button>
+    </form>
+    <div id="error"></div>
+    <div id="result"></div>
+  </div>
+
+  <footer>
+    Built on <strong>OpenAI Whisper</strong> (small model) —
+    original project: <a href="https://github.com/openai/whisper" target="_blank">github.com/openai/whisper</a>.
+    All credit to the original authors.
+  </footer>
+
+<script>
+const form = document.getElementById("upload-form");
+const btn = document.getElementById("submit-btn");
+const resultEl = document.getElementById("result");
+const errorEl = document.getElementById("error");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  errorEl.textContent = "";
+  resultEl.textContent = "";
+
+  const fileInput = document.getElementById("audio-input");
+  if (!fileInput.files.length) return;
+
+  const formData = new FormData();
+  formData.append("audio", fileInput.files[0]);
+
+  btn.disabled = true;
+  btn.textContent = "Transcribing...";
+
+  try {
+    const res = await fetch("/transcribe", { method: "POST", body: formData });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorEl.textContent = data.error || "Something went wrong.";
+    } else {
+      resultEl.textContent = data.text || "(no speech detected)";
+    }
+  } catch (err) {
+    errorEl.textContent = "Network error: " + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Transcribe";
+  }
+});
+</script>
+</body>
+</html>
